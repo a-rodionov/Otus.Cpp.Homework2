@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(test_ip_filter_valid)
   std::vector<std::vector<int>> ip_pool{{1,46,84,93}, {46,94,114,245}, {97,51,213,87}};
 
   auto any_ip_filter = make_ip_filter<int>();
-  BOOST_CHECK( ip_pool.size() == std::count_if(ip_pool.cbegin(), ip_pool.cend(), any_ip_filter) );
+  BOOST_CHECK( ip_pool.size() == std::count_if(std::cbegin(ip_pool), std::cend(ip_pool), any_ip_filter) );
 
   auto first_byte_46_filter = make_ip_filter(make_ip_part_comparator(std::equal_to<int>(), 46));
   for(const auto& ip : ip_pool)
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(test_ip_filter_valid)
     make_ip_part_comparator(any_value<int>(), 0),
     make_ip_part_comparator(any_value<int>(), 0),
     make_ip_part_comparator(std::equal_to<int>(), 46));
-  BOOST_CHECK( 2 == std::count_if(ip_pool.cbegin(), ip_pool.cend(), [&](const auto& ip) {
+  BOOST_CHECK( 2 == std::count_if(std::cbegin(ip_pool), std::cend(ip_pool), [&](const auto& ip) {
     return (first_byte_46_filter(ip) || second_byte_46_filter(ip) || third_byte_46_filter(ip) || fourth_byte_46_filter(ip));
   }) );
   

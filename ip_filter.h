@@ -134,7 +134,7 @@ public:
     if (4 != ip.size())
       return false;
 
-    typename Container::const_iterator ip_part = ip.begin();
+    typename Container::const_iterator ip_part = std::cbegin(ip);
     for (auto& ip_part_comparator : ip_part_comparators)
     {
       if (!ip_part_comparator(*ip_part))
