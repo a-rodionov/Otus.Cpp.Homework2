@@ -15,7 +15,7 @@ configure_file(version_numbers.h.in version_numbers.h)
 # Создание целей
 add_executable(ip_filter main.cpp)
 
-add_library(ip_filter_lib STATIC version.cpp ip_filter.h)
+add_library(ip_filter_lib STATIC version.cpp)
 
 add_executable(ip_filter_test_main test_main.cpp)
 
