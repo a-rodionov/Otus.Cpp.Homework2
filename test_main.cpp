@@ -1,5 +1,8 @@
 #include "version.h"
 
+#include "ip.h"
+#include "filter.h"
+
 #include <vector>
 #include <algorithm>
 #include <numeric>
@@ -15,35 +18,99 @@ BOOST_AUTO_TEST_CASE(test_version_valid)
   BOOST_CHECK( version() > version_info() );
 }
 
-using IP = std::vector<uint8_t>;
-
-BOOST_AUTO_TEST_CASE(test_ip_filter_valid)
+BOOST_AUTO_TEST_CASE(test_ip_not_present)
 {
-  std::vector<IP> ip_pool{{1,46,84,93}, {46,94,114,245}, {97,51,213,87}};
+  std::string testData{"\n"};
+  std::istringstream iss(testData);
+  std::ostringstream oss;
+  BOOST_CHECK_THROW(process(oss, iss), std::invalid_argument);
+}
 
-  for(const auto& ip : ip_pool)
-  {
-    if(46 == ip.at(0))
-      BOOST_CHECK( ip == ip_pool.at(1) );
-  }
+BOOST_AUTO_TEST_CASE(test_ip_element_char_error)
+{
+  std::string testData{"1.2.b.4\n"};
+  std::istringstream iss(testData);
+  std::ostringstream oss;
+  BOOST_CHECK_THROW(process(oss, iss), std::invalid_argument);
+}
 
-  for(const auto& ip : ip_pool)
-  {
-    if(213 == ip.at(2))
-      BOOST_CHECK( ip == ip_pool.at(2) );
-  }
+BOOST_AUTO_TEST_CASE(test_ip_element_count_less_error)
+{
+  std::string testData{"1.2.3\n"};
+  std::istringstream iss(testData);
+  std::ostringstream oss;
+  BOOST_CHECK_THROW(process(oss, iss), std::invalid_argument);
+}
 
-  BOOST_CHECK( 2 == std::count_if(std::cbegin(ip_pool),
-                                  std::cend(ip_pool),
-                                  [](const auto& ip)
-                                  {
-                                    return std::any_of(std::cbegin(ip),
-                                                      std::cend(ip),
-                                                      [](const auto& ip_part) { return 46 == ip_part; } );
-                                  }));
+BOOST_AUTO_TEST_CASE(test_ip_element_count_greater_error)
+{
+  std::string testData{"1.2.3.4.5\n"};
+  std::istringstream iss(testData);
+  std::ostringstream oss;
+  BOOST_CHECK_THROW(process(oss, iss), std::invalid_argument);
+}
 
-  BOOST_CHECK( 224 == std::accumulate(std::cbegin(ip_pool.at(0)), std::cend(ip_pool.at(0)), 0) );
-  
+BOOST_AUTO_TEST_CASE(test_ip_element_less_error)
+{
+  std::string testData{"1.2.-1.4\n"};
+  std::istringstream iss(testData);
+  std::ostringstream oss;
+  BOOST_CHECK_THROW(process(oss, iss), std::invalid_argument);
+}
+
+BOOST_AUTO_TEST_CASE(test_ip_element_greater_error)
+{
+  std::string testData{"1.2.1024.4\n"};
+  std::istringstream iss(testData);
+  std::ostringstream oss;
+  BOOST_CHECK_THROW(process(oss, iss), std::invalid_argument);
+}
+
+BOOST_AUTO_TEST_CASE(test_filter_is_equal)
+{
+  constexpr std::array<uint8_t, 4> ip {1,2,3,4};
+
+  BOOST_STATIC_ASSERT(true == filter_is_equal(ip, 1, 2, 3, 4));                     // compare all
+  BOOST_STATIC_ASSERT(true == filter_is_equal(ip, 1, ignore{}, 3, 4));              // compare all except 2nd
+  BOOST_STATIC_ASSERT(true == filter_is_equal(ip, ignore{}, 2, 3));                 // compare 2nd, 3rd and skip 1st
+  BOOST_STATIC_ASSERT(true == filter_is_equal(ip, ignore{}, ignore{}, ignore{}, 4));// compare 4th and skip 1st, 2nd, 3rd
+  BOOST_STATIC_ASSERT(false == filter_is_equal(ip, 2, 2, 3, 4));                    // not equal
+  BOOST_STATIC_ASSERT(false == filter_is_equal(ip, 1, ignore{}, 4, 4));             // not equal
+  //BOOST_STATIC_ASSERT(false == filter_is_equal(ip, 2, 2, 3, 4, 5));                 // compile time error if elements to compare > array size
+}
+
+BOOST_AUTO_TEST_CASE(test_ip_process_valid)
+{
+  std::string testData{"1.2.3.4\n"
+                      "1.3.3.4\n"
+                      "1.3.4.4\n"
+                      "1.3.4.5\n"
+                      "250.13.87.4\n"
+                      "46.70.5.6\n"
+                      "70.46.5.6\n"
+                      "70.2.46.4\n"};
+
+  std::string result{"250.13.87.4\n"
+                    "70.46.5.6\n"
+                    "70.2.46.4\n"
+                    "46.70.5.6\n"
+                    "1.3.4.5\n"
+                    "1.3.4.4\n"
+                    "1.3.3.4\n"
+                    "1.2.3.4\n"
+                    "1.3.4.5\n"
+                    "1.3.4.4\n"
+                    "1.3.3.4\n"
+                    "1.2.3.4\n"
+                    "46.70.5.6\n"
+                    "70.46.5.6\n"
+                    "70.2.46.4\n"
+                    "46.70.5.6\n"};
+
+  std::istringstream iss(testData);
+  std::ostringstream oss;
+  process(oss, iss);
+  BOOST_CHECK_EQUAL(oss.str(), result);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
