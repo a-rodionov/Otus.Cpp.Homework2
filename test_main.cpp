@@ -76,6 +76,7 @@ BOOST_AUTO_TEST_CASE(test_filter_is_equal)
   BOOST_STATIC_ASSERT(true == filter_is_equal(ip, ignore{}, ignore{}, ignore{}, 4));// compare 4th and skip 1st, 2nd, 3rd
   BOOST_STATIC_ASSERT(false == filter_is_equal(ip, 2, 2, 3, 4));                    // not equal
   BOOST_STATIC_ASSERT(false == filter_is_equal(ip, 1, ignore{}, 4, 4));             // not equal
+  //BOOST_STATIC_ASSERT(false == filter_is_equal(ip));                                // compile time error if no elements for comparing set
   //BOOST_STATIC_ASSERT(false == filter_is_equal(ip, 2, 2, 3, 4, 5));                 // compile time error if elements to compare > array size
 }
 

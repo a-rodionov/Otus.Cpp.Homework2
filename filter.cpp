@@ -3,18 +3,17 @@
 #include "utils.h"
 #include <algorithm>
 #include <iterator>
+#include <set>
 
 void process(std::ostream& out, std::istream& in)
 {
-  std::vector<IP> ip_pool;
+  std::multiset<IP, std::greater<IP>> ip_pool;
 
   for (std::string line; std::getline(in, line);)
   {
     std::vector<std::string> v = split(line, '\t');
-    ip_pool.push_back(IP{split(v.at(0), '.')});
+    ip_pool.emplace(split(v.at(0), '.'));
   }
-
-  std::sort(std::begin(ip_pool), std::end(ip_pool), std::greater<decltype(ip_pool)::value_type>{});
 
   std::copy(std::cbegin(ip_pool),
             std::cend(ip_pool),

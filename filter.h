@@ -27,6 +27,7 @@ template<typename T, std::size_t N, typename ... Args, typename Indices = std::m
 constexpr auto filter_is_equal(const std::array<T,N>& ip, Args ... args)
 {
   static_assert(N >= sizeof...(args), "There're more items for comparing than array size!");
+  static_assert(0 != sizeof...(args), "No items for comparing!");
   return filter_is_equal_impl(ip, Indices{}, args...);
 }
 
